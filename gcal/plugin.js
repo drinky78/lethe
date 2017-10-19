@@ -144,6 +144,44 @@ GoogleCalendar = {
       cb(gcalEvents);
     });
   }
+  fs.writeFile(TOKEN_PATH, JSON.stringify(token));
+  console.log('Token stored to ' + TOKEN_PATH);
+}
+
+/**
+ * Lists events for the past 10 days
+ *
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ */
+function listLastTwoWeeksEvents(auth) {
+  var calendar = google.calendar('v3');
+  var firstEventDate = new Date();
+  firstEventDate.setDate(firstEventDate.getDate() - 10);
+  console.log(firstEventDate);
+  calendar.events.list({
+    auth: auth,
+    calendarId: 'primary',
+    timeMin: firstEventDate.toISOString(),
+    timeMax: (new Date()).toISOString(),
+    maxResults: 20,
+    singleEvents: true,
+    orderBy: 'startTime'
+  }, function(err, response) {
+    if (err) {
+      console.log('The API returned an error: ' + err);
+      return;
+    }
+    var events = response.items;
+    if (events.length == 0) {
+      console.log('No events found in Google Calendar for the past 10 days.');
+    } else {
+      for (var i = 0; i < events.length; i++) {
+        var event = events[i];
+        var start = event.start.dateTime || event.start.date;
+        console.log(prettyDate(start)+":", event.summary);
+      }
+    }
+  });
 }
 
 module.exports = GoogleCalendar
